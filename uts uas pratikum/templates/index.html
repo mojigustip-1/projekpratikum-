@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penjualan Barang Elektronik ROG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: url('{{ url_for('static', filename='city-with-rog-republic-of-gamers-logo_3840x2160_xtrafondos.com.jpg') }}') no-repeat center center fixed;
+            background-size: cover;
+            color: red;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        table {
+            width: 80%;
+            margin: auto;
+            border-collapse: collapse;
+            background-color: rgba(34, 34, 34, 0.9);
+        }
+        th, td {
+            border: 1px solid red;
+            padding: 10px;
+            text-align: center;
+        }
+        button {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1 class="title">Penjualan Barang Elektronik ROG</h1>
+    </header>
+    
+    <section class="add-data">
+        <h3>Tambah Datas</h3>
+        <input type="text" id="nama_pelanggan" placeholder="Nama Pelanggan">
+        <input type="text" id="merek_barang" placeholder="Merek Barang">
+        <input type="text" id="model_barang" placeholder="Model Barang">
+        <input type="number" id="harga" placeholder="Harga" oninput="hitungTotal()">
+        <input type="number" id="jumlah" placeholder="Jumlah" oninput="hitungTotal()">
+        <input type="text" id="total_harga" placeholder="Total Harga" readonly>
+        <button onclick="tambahData()">Tambahkan</button>
+    </section>
+    
+    <section class="data-list">
+        <h3>Data Penjualan</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama</th>
+                    <th>Merek</th>
+                    <th>Model</th>
+                    <th>Harga</th>
+                    <th>Jumlah</th>
+                    <th>Total Harga</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="data-penjualan"></tbody>
+        </table>
+    </section>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            ambilData();
+        });
+
+        function formatRupiah(angka) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka);
+        }
+
+        function hitungTotal() {
+            let harga = document.getElementById('harga').value;
+            let jumlah = document.getElementById('jumlah').value;
+            let total = harga * jumlah;
+            document.getElementById('total_harga').value = formatRupiah(total);
+        }
+
+        function ambilData() {
+            fetch("http://127.0.0.1:5000/penjualan")
+                .then(response => response.json())
+                .then(data => {
+                    let tableBody = document.getElementById("data-penjualan");
+                    tableBody.innerHTML = "";
+                    data.forEach(item => {
+                        let row = `<tr>
+                            <td>${item.id}</td>
+                            <td>${item.nama_pelanggan}</td>
+                            <td>${item.merek_barang}</td>
+                            <td>${item.model_barang}</td>
+                            <td>${formatRupiah(item.harga)}</td>
+                            <td>${item.jumlah}</td>
+                            <td>${formatRupiah(item.total_harga)}</td>
+                            <td><button onclick="hapusData(${item.id})">Hapus</button></td>
+                        </tr>`;
+                        tableBody.innerHTML += row;
+                    });
+                });
+        }
+
+        function tambahData() {
+            let harga = parseInt(document.getElementById("harga").value);
+            let jumlah = parseInt(document.getElementById("jumlah").value);
+            let data = {
+                nama_pelanggan: document.getElementById("nama_pelanggan").value,
+                merek_barang: document.getElementById("merek_barang").value,
+                model_barang: document.getElementById("model_barang").value,
+                harga: harga,
+                jumlah: jumlah,
+                total_harga: harga * jumlah
+            };
+
+            fetch("http://127.0.0.1:5000/penjualan", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(() => {
+                ambilData();
+                document.getElementById("nama_pelanggan").value = "";
+                document.getElementById("merek_barang").value = "";
+                document.getElementById("model_barang").value = "";
+                document.getElementById("harga").value = "";
+                document.getElementById("jumlah").value = "";
+                document.getElementById("total_harga").value = "";
+            });
+        }
+
+        function hapusData(id) {
+            fetch(`http://127.0.0.1:5000/penjualan/${id}`, { method: "DELETE" })
+                .then(response => response.json())
+                .then(() => ambilData());
+        }
+    </script>
+</body>
+</html>
